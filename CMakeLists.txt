@@ -24,6 +24,8 @@ string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
 
+hunter_add_package(Boost COMPONENTS log filesystem thread)
+find_package(Boost CONFIG REQUIRED log filesystem thread)
 hunter_add_package(GTest)
 find_package(GTest CONFIG REQUIRED)
 
@@ -36,7 +38,7 @@ target_include_directories(simple-server-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 target_include_directories(tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(tests GTest::gtest_main simple-server-lib)
-target_link_libraries(simple-server-app simple-server-lib)
+target_link_libraries(simple-server-app simple-server-lib Boost::log Boost::filesystem Boost::thread)
 
 enable_testing()
 add_test(NAME unit_tests COMMAND tests)
