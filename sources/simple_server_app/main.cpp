@@ -14,6 +14,7 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
+#include <simple_server_lib.hpp>
 
 namespace simple_server_app {
     static void setup_logging();
@@ -21,6 +22,7 @@ namespace simple_server_app {
 
 int main(int const arguments_count, char const* arguments[]) {
     ::simple_server_app::setup_logging();
+    BOOST_LOG_TRIVIAL(error) << arguments_count << arguments[0];
 
     return 0;
 }
