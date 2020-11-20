@@ -20,9 +20,16 @@ namespace simple_server_app {
     static void setup_logging();
 } // namespace simple_server_app
 
-int main(int const arguments_count, char const* arguments[]) {
+int main(int const/* arguments_count*/, char const* /*arguments*/[]) {
     ::simple_server_app::setup_logging();
-    BOOST_LOG_TRIVIAL(error) << arguments_count << arguments[0];
+
+    ::simple_server_lib::Server server(::simple_server_lib::Server::Properties{
+        ::simple_server_lib::ip::tcp::endpoint{::simple_server_lib::ip::tcp::v4(), 18080}
+    });
+
+    ::std::string input;
+    while (input != "stop") ::std::getline(::std::cin, input);
+    server.stop();
 
     return 0;
 }
