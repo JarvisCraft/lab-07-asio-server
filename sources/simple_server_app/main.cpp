@@ -20,12 +20,30 @@ namespace simple_server_app {
     static void setup_logging();
 } // namespace simple_server_app
 
-int main(int const/* arguments_count*/, char const* /*arguments*/[]) {
+int main(int const arguments_count, char const* arguments[]) {
     ::simple_server_app::setup_logging();
 
+    if (arguments_count < 2) {
+        BOOST_LOG_TRIVIAL(error) << "Missing port parameter";
+        return 1;
+    }
+
+    in_port_t port;
+    try {
+        port = ::std::stoi(arguments[1]);
+    } catch (::std::invalid_argument const& e) {
+        BOOST_LOG_TRIVIAL(error) << "Couldn't parse port: " << e.what();
+        return 1;
+    } catch (::std::out_of_range const& e) {
+        BOOST_LOG_TRIVIAL(error) << "Couldn't parse port: " << e.what();
+        return 1;
+    }
+
+    BOOST_LOG_TRIVIAL(info) << "Starting server at localhost:" << port << ::std::endl;
     ::simple_server_lib::Server server(::simple_server_lib::Server::Properties{
-        ::simple_server_lib::ip::tcp::endpoint{::simple_server_lib::ip::tcp::v4(), 18080}
+        ::simple_server_lib::ip::tcp::endpoint{::simple_server_lib::ip::tcp::v4(), port}
     });
+    BOOST_LOG_TRIVIAL(info) << "Starting has been successfully started" << ::std::endl;
 
     ::std::string input;
     while (input != "stop") ::std::getline(::std::cin, input);
