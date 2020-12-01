@@ -11,6 +11,7 @@
 #include <simple_server_lib/definitions.hpp>
 #include <simple_server_lib/user_manager.hpp>
 #include <thread>
+#include <vector>
 
 namespace simple_server_lib {
 

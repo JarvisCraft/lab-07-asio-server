@@ -4,9 +4,9 @@
 #define INCLUDE_SIMPLE_SERVER_LIB_USER_MANAGER_HPP_
 
 #include <functional>
-#include <shared_mutex>
-#include <set>
 #include <map>
+#include <set>
+#include <shared_mutex>
 #include <string>
 
 namespace simple_server_lib {
@@ -22,6 +22,7 @@ namespace simple_server_lib {
          * @brief Type of listener used for notification on usernames' updates
          */
         using listener_t = ::std::function<void(::std::set<::std::string> const&)>;
+
     private:
         /**
          * @brief Names of authenticated users

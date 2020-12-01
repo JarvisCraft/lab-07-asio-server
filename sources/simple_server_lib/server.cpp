@@ -40,7 +40,6 @@ namespace simple_server_lib {
             {
                 ::boost::system::error_code error;
                 BOOST_LOG_TRIVIAL(info) << "Waiting for new connections" << ::std::endl;
-                // TODO handle interruption
                 acceptor.accept(client->socket(), error); // this will wait until the client can be started
                 if (error) break;
             }
