@@ -19,13 +19,23 @@ namespace simple_server_lib {
      */
     using SharedClient = ::std::shared_ptr<Client>;
 
+    /**
+     * @brief Basic synchronous server
+     */
     class Server final {
     public:
         /**
          * @brief Properties to be used by the server
          */
         struct Properties {
+            /**
+             * @brief Server endpoint
+             */
             ip::tcp::endpoint endpoint;
+
+            /**
+             * @brief Amount of worker threads
+             */
             ::std::size_t worker_count;
         };
 
