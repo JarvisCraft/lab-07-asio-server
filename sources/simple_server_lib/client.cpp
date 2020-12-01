@@ -1,6 +1,7 @@
 // Copyright 2020 Petr Portnov <me@progrm-jarvis.ru>
 
 #include <boost/log/trivial.hpp>
+#include <boost/algorithm/string/join.hpp>
 #include <simple_server_lib/client.hpp>
 #include <stdexcept>
 #include <string>
@@ -42,10 +43,10 @@ namespace simple_server_lib {
                 if (error == asio::error::eof) {
                     disconnect("disconnected", error);
                     BOOST_LOG_TRIVIAL(info) << "User has disconnected" << ::std::endl;
-                    return false;
+                } else {
+                    disconnect("buffer_error", error);
+                    BOOST_LOG_TRIVIAL(info) << "Disconnecting user due to buffer error: " << error << ::std::endl;
                 }
-                disconnect("buffer_error", error);
-                BOOST_LOG_TRIVIAL(info) << "Disconnecting user due to buffer error: " << error << ::std::endl;
                 return false;
             }
             ::std::istream input(&buffer);
@@ -72,7 +73,16 @@ namespace simple_server_lib {
                         for (::std::size_t i = 2; i < size; ++i) username += " " + words[i];
                     }
                     if (user_manager_.authenticate(username)) {
-                        state_ = AuthenticatedState{username};
+                        state_ = AuthenticatedState{username,
+                                                    [this](UserManager::usernames_t const& usernames) {
+                                                        error_code error;
+                                                        send("client_list_changed", error);
+                                                        if (error) BOOST_LOG_TRIVIAL(error)
+                                                                       << "Error on attempt to update usernames: "
+                                                                       << error << ::std::endl;
+                                                    }};
+                        user_manager_.add_update_listener(username, ::std::get<AuthenticatedState>(state_).listener_);
+
                         send("login ok", error);
                         BOOST_LOG_TRIVIAL(info) << "Authenticated user by name \"" << username << "\"" << ::std::endl;
                         return true;
@@ -93,6 +103,8 @@ namespace simple_server_lib {
             BOOST_LOG_TRIVIAL(info) << "Disconnecting user due to him not being authenticated" << ::std::endl;
             return false;
         } else if (::std::holds_alternative<AuthenticatedState>(state_)) {
+            // Protocol after authentication
+
             if (words[0] == "ping") {
                 ping(error);
                 BOOST_LOG_TRIVIAL(info) << "Pinged client" << ::std::endl;
@@ -100,15 +112,7 @@ namespace simple_server_lib {
             }
 
             if (words[0] == "clients") {
-                auto const usernames = user_manager_.get_authenticated();
-                assert(!usernames.empty() && "usernames cannot be empty");
-                auto iterator = usernames.cbegin();
-                ::std::string clients = *iterator;
-
-                auto const end = usernames.cend();
-                while (++iterator != end) clients += ", " + *iterator;
-
-                send(clients, error);
+                notify_usernames_update(user_manager_.get_authenticated(), error);
                 BOOST_LOG_TRIVIAL(info) << "Sent clients to the user" << ::std::endl;
                 return true;
             }
@@ -129,7 +133,15 @@ namespace simple_server_lib {
         socket_.write_some(asio::buffer(payload + DELIMITER), error);
     }
 
+
+    void Client::notify_usernames_update(UserManager::usernames_t const& usernames, error_code& error) {
+        send(::boost::algorithm::join(usernames, ", "), error);
+    }
+
     void Client::disconnect(::std::string const& payload, error_code& error) {
+        if (::std::holds_alternative<AuthenticatedState>(state_)) user_manager_.remove_update_listener(
+            ::std::get<AuthenticatedState>(state_).name);
+
         send(payload, error);
         close();
 

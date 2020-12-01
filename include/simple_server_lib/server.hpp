@@ -26,6 +26,7 @@ namespace simple_server_lib {
          */
         struct Properties {
             ip::tcp::endpoint endpoint;
+            ::std::size_t worker_count;
         };
 
     private:
@@ -62,7 +63,7 @@ namespace simple_server_lib {
         /**
          * @brief Worker thread
          */
-        ::std::thread worker_;
+        ::std::vector<::std::thread> workers_;
 
         /**
          * @brief Manager of authenticated users

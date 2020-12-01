@@ -9,7 +9,9 @@ namespace simple_server_lib {
 
     Server::Server(Server::Properties properties) : properties_(std::move(properties)),
                                                     boss_(&Server::handle_client_connections, this),
-                                                    worker_(::std::thread(&Server::handle_clients, this)) {}
+                                                    workers_(properties.worker_count) {
+        for (auto& worker : workers_) worker = ::std::thread(&Server::handle_clients, this);
+    }
 
     void Server::stop() {
         BOOST_LOG_TRIVIAL(info) << "Shutting down..." << ::std::endl;
@@ -23,9 +25,9 @@ namespace simple_server_lib {
         boss_.join();
         BOOST_LOG_TRIVIAL(info) << "Boss thread has been shut down successfully" << ::std::endl;
 
-        BOOST_LOG_TRIVIAL(info) << "Waiting for worker thread" << ::std::endl;
-        worker_.join();
-        BOOST_LOG_TRIVIAL(info) << "Worker thread has been shut down successfully" << ::std::endl;
+        BOOST_LOG_TRIVIAL(info) << "Waiting for worker threads" << ::std::endl;
+        for (auto &worker : workers_) worker.join();
+        BOOST_LOG_TRIVIAL(info) << "Worker threads have been shut down successfully" << ::std::endl;
 
         BOOST_LOG_TRIVIAL(info) << "Shut down successfully" << ::std::endl;
     }

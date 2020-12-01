@@ -4,6 +4,7 @@
 #define INCLUDE_SIMPLE_SERVER_LIB_CLIENT_HPP_
 
 #include <chrono>
+#include <optional>
 #include <simple_server_lib/definitions.hpp>
 #include <string>
 #include <variant>
@@ -38,11 +39,22 @@ namespace simple_server_lib {
          */
         UserManager& user_manager_;
 
+        /**
+         * @brief Last time when the client was proved to be alive
+         */
         chrono::system_clock::time_point last_time_alive_;
 
         struct NotAuthenticatedState final {};
         struct AuthenticatedState final {
+            /**
+             * @brief Name of the user
+             */
             ::std::string name;
+
+            /**
+             * @brief Associated user listener
+             */
+            UserManager::listener_t listener_;
         };
 
         /**
@@ -95,18 +107,30 @@ namespace simple_server_lib {
          */
         [[nodiscard]] socket_t& socket();
 
+        // TODO void refresh_clients_list(::std::quconst&);
+
     private:
         /**
          * @brief Sends the given payload to the client
          *
          * @param payload payload to send to the client
+         * @param error reference to filled error code
          */
         void send(::std::string const& payload, error_code& error);
+
+        /**
+         * @brief Send the list of users to the client
+         *
+         * @param usernames usernames to be sent to the client
+         * @param error reference to filled error code
+         */
+        void notify_usernames_update(UserManager::usernames_t const& usernames, error_code& error);
 
         /**
          * @brief Disconnects the client sending the given payload
          *
          * @param payload payload to send to the client
+         * @param error reference to filled error code
          */
         void disconnect(::std::string const& payload, error_code& error);
     };
