@@ -18,8 +18,7 @@ HunterGate(
         SHA1 "b15e14b31d96ee2e2be32187d21e2390d0b974c8"
 )
 
-project(simple-server-lib)
-project(simple-server-app)
+project(lab-07-asio-server)
 string(APPEND CMAKE_CXX_FLAGS " -pedantic -Werror -Wall -Wextra")
 string(APPEND CMAKE_CXX_FLAGS " -Wno-unused-command-line-argument")
 string(APPEND CMAKE_CXX_FLAGS " -Wshadow -Wnon-virtual-dtor")
