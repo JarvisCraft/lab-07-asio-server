@@ -37,6 +37,11 @@ namespace simple_server_lib {
              * @brief Amount of worker threads
              */
             ::std::size_t worker_count;
+
+            /**
+             * @brief Timeout after which the client should be considered dead
+             */
+            chrono::seconds client_timeout;
         };
 
     private:

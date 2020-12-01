@@ -41,7 +41,7 @@ int main(int const arguments_count, char const* arguments[]) {
 
     BOOST_LOG_TRIVIAL(info) << "Starting server at localhost:" << port << ::std::endl;
     ::simple_server_lib::Server server(::simple_server_lib::Server::Properties{
-        ::simple_server_lib::ip::tcp::endpoint{::simple_server_lib::ip::tcp::v4(), port}, 2
+        ::simple_server_lib::ip::tcp::endpoint{::simple_server_lib::ip::tcp::v4(), port}, 2, ::std::chrono::seconds(5)
     });
     BOOST_LOG_TRIVIAL(info) << "Starting has been successfully started" << ::std::endl;
 

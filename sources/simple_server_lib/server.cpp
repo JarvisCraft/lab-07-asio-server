@@ -63,6 +63,13 @@ namespace simple_server_lib {
                 clients_.pop();
             }
 
+            if ((chrono::system_clock::now() - client->last_time_alive()) > properties_.client_timeout) {
+                error_code error;
+                client->disconnect_inactive(error);
+                if (error) BOOST_LOG_TRIVIAL(error)
+                               << "An error happened while disconnecting a client " << error << ::std::endl;
+            }
+
             error_code error;
             // add the client to the queue if it still is alive
             if (client->handle(error) && !error) {

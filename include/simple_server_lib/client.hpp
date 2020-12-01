@@ -14,11 +14,6 @@
 namespace simple_server_lib {
 
     /**
-     * @brief Timeout after which the client should be considered dead
-     */
-    auto constexpr TIMEOUT = ::std::chrono::seconds(5);
-
-    /**
      * @brief Client whose connection is handled
      */
     class Client final {
@@ -71,6 +66,9 @@ namespace simple_server_lib {
          */
         explicit Client(asio::io_service& executor, UserManager& user_manager);
 
+        /**
+         * @brief Destroys this client instance
+         */
         ~Client();
 
         /**
@@ -94,6 +92,18 @@ namespace simple_server_lib {
         void close();
 
         /**
+         * @brief Closes this client due to its inactivity
+         */
+        void disconnect_inactive(error_code& error);
+
+        /**
+         * @brief Gets the moment of time when the client was last proved to be alive
+         *
+         * @return last time when the client was proved to be alive
+         */
+        [[nodiscard]] chrono::system_clock::time_point last_time_alive() const;
+
+        /**
          * @brief Gets a constant reference to the socket associated with the client
          *
          * @return constant reference to the socket associated with the client
@@ -106,8 +116,6 @@ namespace simple_server_lib {
          * @return reference to the socket associated with the client
          */
         [[nodiscard]] socket_t& socket();
-
-        // TODO void refresh_clients_list(::std::quconst&);
 
     private:
         /**

@@ -1,7 +1,7 @@
 // Copyright 2020 Petr Portnov <me@progrm-jarvis.ru>
 
-#include <boost/log/trivial.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <boost/log/trivial.hpp>
 #include <simple_server_lib/client.hpp>
 #include <stdexcept>
 #include <string>
@@ -15,9 +15,20 @@ namespace simple_server_lib {
           last_time_alive_{chrono::system_clock::now()},
           state_{NotAuthenticatedState{}} {}
 
-    Client::~Client() { close(); }
+    Client::~Client() {
+        // release the managed callback
+        if (::std::holds_alternative<AuthenticatedState>(state_))
+            user_manager_.remove_update_listener(::std::get<AuthenticatedState>(state_).name);
+
+        close();
+    }
 
     void Client::close() { socket_.close(); }
+
+    void Client::disconnect_inactive(error_code& error) {
+        BOOST_LOG_TRIVIAL(info) << "Disconnecting client on timeout" << ::std::endl;
+        disconnect("timeout", error);
+    }
 
     template <typename D>
     static ::std::vector<::std::string> split(::std::string const& string, D const& delimiter) {
@@ -34,7 +45,6 @@ namespace simple_server_lib {
     }
 
     bool Client::handle(error_code& error) {
-        BOOST_LOG_TRIVIAL(info) << "<<HANDLE>>" << ::std::endl;
         ::std::string line;
         {
             asio::streambuf buffer;
@@ -49,6 +59,10 @@ namespace simple_server_lib {
                 }
                 return false;
             }
+            // something was read from client
+
+            last_time_alive_ = chrono::system_clock::now();
+
             ::std::istream input(&buffer);
             ::std::getline(input, line);
         }
@@ -73,13 +87,12 @@ namespace simple_server_lib {
                         for (::std::size_t i = 2; i < size; ++i) username += " " + words[i];
                     }
                     if (user_manager_.authenticate(username)) {
-                        state_ = AuthenticatedState{username,
-                                                    [this](UserManager::usernames_t const& usernames) {
-                                                        error_code error;
-                                                        send("client_list_changed", error);
-                                                        if (error) BOOST_LOG_TRIVIAL(error)
+                        state_ = AuthenticatedState{username, [this](UserManager::usernames_t const&) {
+                                                        error_code refresh_error;
+                                                        send("client_list_changed", refresh_error);
+                                                        if (refresh_error) BOOST_LOG_TRIVIAL(error)
                                                                        << "Error on attempt to update usernames: "
-                                                                       << error << ::std::endl;
+                                                                       << refresh_error << ::std::endl;
                                                     }};
                         user_manager_.add_update_listener(username, ::std::get<AuthenticatedState>(state_).listener_);
 
@@ -125,29 +138,30 @@ namespace simple_server_lib {
         throw ::std::runtime_error("Incorrect state");
     }
 
-    void Client::ping(error_code& error) {
-        send("ping_ok", error);
-    }
+    void Client::ping(error_code& error) { send("ping_ok", error); }
 
     void Client::send(::std::string const& payload, error_code& error) {
         socket_.write_some(asio::buffer(payload + DELIMITER), error);
     }
-
 
     void Client::notify_usernames_update(UserManager::usernames_t const& usernames, error_code& error) {
         send(::boost::algorithm::join(usernames, ", "), error);
     }
 
     void Client::disconnect(::std::string const& payload, error_code& error) {
-        if (::std::holds_alternative<AuthenticatedState>(state_)) user_manager_.remove_update_listener(
-            ::std::get<AuthenticatedState>(state_).name);
+        if (::std::holds_alternative<AuthenticatedState>(state_)) {
+            user_manager_.remove_update_listener(::std::get<AuthenticatedState>(state_).name);
+            state_ = NotAuthenticatedState{};
+        }
 
         send(payload, error);
         close();
 
-        if (::std::holds_alternative<AuthenticatedState>(state_))
-            user_manager_.unauthenticate(::std::get<AuthenticatedState>(state_).name);
+        if (::std::holds_alternative<AuthenticatedState>(state_)) user_manager_.unauthenticate(
+            ::std::get<AuthenticatedState>(state_).name);
     }
+
+    chrono::system_clock::time_point Client::last_time_alive() const { return last_time_alive_;  }
 
     Client::socket_t const& Client::socket() const { return socket_; }
 
