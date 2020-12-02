@@ -41,9 +41,10 @@ target_include_directories(simple-server-lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 target_include_directories(tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(tests PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_link_libraries(simple-server-lib PUBLIC asio::asio_headeronly Boost::log)
+target_link_libraries(simple-server-lib PUBLIC asio::asio_headeronly
+        Boost::log Boost::filesystem Boost::thread)
 target_link_libraries(tests PUBLIC GTest::gtest_main simple-server-lib)
-target_link_libraries(simple-server-app PUBLIC simple-server-lib asio::asio_static Boost::log Boost::filesystem Boost::thread)
+target_link_libraries(simple-server-app PUBLIC simple-server-lib asio::asio_static)
 
 enable_testing()
 add_test(NAME unit_tests COMMAND tests)
