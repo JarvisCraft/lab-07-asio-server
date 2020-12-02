@@ -23,19 +23,6 @@ namespace simple_server_lib {
          */
         using socket_t = ip::tcp::socket;
 
-        struct NotAuthenticatedState final {};
-        struct AuthenticatedState final {
-            /**
-             * @brief Name of the user
-             */
-            ::std::string name;
-
-            /**
-             * @brief Associated user listener
-             */
-            UserManager::listener_t listener_;
-        };
-
     private:
         /**
          * @brief Socket associated with the client
@@ -52,7 +39,19 @@ namespace simple_server_lib {
          */
         chrono::system_clock::time_point last_time_alive_;
 
-    private:
+        struct NotAuthenticatedState final {};
+        struct AuthenticatedState final {
+            /**
+             * @brief Name of the user
+             */
+            ::std::string name;
+
+            /**
+             * @brief Associated user listener
+             */
+            UserManager::listener_t listener_;
+        };
+
         /**
          * @brief Current state of this client
          */
