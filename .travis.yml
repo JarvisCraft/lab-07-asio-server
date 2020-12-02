@@ -2,10 +2,12 @@ os: linux
 dist: focal
 language: minimal
 
+compiler: gcc
+
 addons:
   apt:
     update: true
-    packages: [python3-pip, gcovr]
+    packages: [ python3-pip, gcovr ]
 
 install:
   - pip3 install cpplint
